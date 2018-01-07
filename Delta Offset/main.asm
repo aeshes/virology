@@ -3,7 +3,9 @@
 
 option prologue:none
 option epilogue:none
+option casemap:none
 
+include    windows.inc
 includelib kernel32.lib
 
 extrn ExitProcess@4 : proc
@@ -14,24 +16,23 @@ extrn ExitProcess@4 : proc
 	Kernel32Limit dw limit
 	
 .code
-main:
-	call delta
-delta:
-	pop ebp
-	sub ebp, offset delta
+main:  call delta
+delta: pop ebp
+	   sub ebp, offset delta
 	
-	mov esi, [esp]
-	and esi, 0FFFF0000h
-	call GetKernel32
+	   mov esi, [esp]
+	   and esi, 0FFFF0000h
+	   call GetKernel32
 	
-	push 00000000h
-	call ExitProcess@4
+	   push 00000000h
+	   call ExitProcess@4
 	
 CheckPE proto
 
 GetKernel32 proc
 	.while byte ptr [ebp + Kernel32Limit] != 00h
-		.if word ptr[esi] == "ZM"
+		assume esi: ptr IMAGE_DOS_HEADER
+		.if [esi].e_magic == "ZM"
 			invoke CheckPE
 			.if eax != 0
 				ret
@@ -44,9 +45,12 @@ GetKernel32 proc
 GetKernel32 endp
 
 CheckPE proc
-	mov edi, [esi + 3Ch]
+	assume esi: ptr IMAGE_DOS_HEADER
+	mov edi, [esi].e_lfanew
 	add edi, esi
-	.if dword ptr[edi] == "EP"
+	
+	assume edi: ptr IMAGE_NT_HEADERS
+	.if [edi].Signature == IMAGE_NT_SIGNATURE
 		xchg eax, esi
 	.else
 		xor eax, eax
