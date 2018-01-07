@@ -50,11 +50,11 @@ CheckPE proc
 	add edi, esi
 	
 	assume edi: ptr IMAGE_NT_HEADERS
+	xor eax, eax
 	.if [edi].Signature == IMAGE_NT_SIGNATURE
 		xchg eax, esi
-	.else
-		xor eax, eax
 	.endif
+	
 	ret
 CheckPE endp
 
