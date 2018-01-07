@@ -1,6 +1,9 @@
 .586p
 .model flat, stdcall
 
+option prologue:none
+option epilogue:none
+
 includelib kernel32.lib
 
 extrn ExitProcess@4 : proc
@@ -24,27 +27,31 @@ delta:
 	push 00000000h
 	call ExitProcess@4
 	
-GetKernel32:
-one:
-	cmp byte ptr [ebp + Kernel32Limit], 00h
-	jz WeFailed
-	
-	cmp word ptr [esi], "ZM"
-	jz CheckPE
-two:
-	sub esi, 10000h
-	dec byte ptr [ebp + Kernel32Limit]
-	jmp one
-	
-CheckPE:
-	mov edi, [esi + 3Ch]		; e_lfanew
-	add edi, esi			; RVA of PE header
-	cmp dword ptr [edi], "EP"	; Seek for PE signature
-	jz WeGotKernel32
-	jmp two
-WeFailed:
-	mov esi, 0BFF70000h
-WeGotKernel32:
-	xchg eax, esi
+CheckPE proto
+
+GetKernel32 proc
+	.while byte ptr [ebp + Kernel32Limit] != 00h
+		.if word ptr[esi] == "ZM"
+			invoke CheckPE
+			.if eax != 0
+				ret
+			.endif
+		.endif
+		sub esi, 10000h
+		dec byte ptr[ebp + Kernel32Limit]
+	.endw
 	ret
+GetKernel32 endp
+
+CheckPE proc
+	mov edi, [esi + 3Ch]
+	add edi, esi
+	.if dword ptr[edi] == "EP"
+		xchg eax, esi
+	.else
+		xor eax, eax
+	.endif
+	ret
+CheckPE endp
+
 end main
