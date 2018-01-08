@@ -9,11 +9,6 @@ include    windows.inc
 includelib kernel32.lib
 
 extrn ExitProcess@4 : proc
-
-.data
-	limit equ 5
-	db 0
-	Kernel32Limit dw limit
 	
 .code
 main:  call delta
