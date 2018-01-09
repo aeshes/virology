@@ -24,11 +24,12 @@ CheckPE proto
 
 GetKernel32 proc
 	assume fs:nothing
-	mov eax, fs:[30h]		; Get a pointer to the PEB
-	mov eax, [eax + 0Ch]	; Get PEB->Ldr
-	mov eax, [eax+ 1Ch]		; Get PEB->Ldr.InInitializationOrderModuleList.Flink (1st entry)
-	mov eax, [eax]			; Get the next entry (2nd entry)
-	mov eax, [eax]			; Get the 2nd entries base address (kernelbase.dll)
+	mov esi, fs:[30h]		; Get the address of PEB
+	mov esi, [esi + 0Ch]	; Get PEB->Ldr
+	mov esi, [esi+ 1Ch]		; Get PEB->Ldr.InInitializationOrderModuleList.Flink (1st module)
+	lodsd
+	mov esi, eax			; Get the 2nd module
+	lodsd					; Get the third module
 	mov eax, [eax + 08h]	; Get the 3rd entries base address (kernel32.dll)
 	ret
 GetKernel32 endp
