@@ -27,8 +27,8 @@ GetKernel32 proc
 	mov esi, fs:[30h]		; Get the address of PEB
 	mov esi, [esi + 0Ch]	; Get PEB->Ldr
 	mov esi, [esi+ 1Ch]		; Get PEB->Ldr.InInitializationOrderModuleList.Flink (1st module)
-	lodsd
-	mov esi, eax			; Get the 2nd module
+	lodsd					; Get the 2nd module
+	mov esi, eax			
 	lodsd					; Get the third module
 	mov eax, [eax + 08h]	; Get the 3rd entries base address (kernel32.dll)
 	ret
