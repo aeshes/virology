@@ -11,7 +11,8 @@ includelib kernel32.lib
 extrn ExitProcess@4 : proc
 
 .data
-	kernel dd 0
+	kernel    dd 0
+	pe_header dd 0
 	
 .code
 main:
@@ -19,12 +20,14 @@ main:
 	mov kernel, eax
 	
 	call get_pe_header
+	mov pe_header, eax
+	
 	call get_export
 	
 	push 00000000h
 	call ExitProcess@4
 	
-
+	
 get_kernel32_peb:
 	assume fs:nothing
 	mov esi, fs:[30h]		; Get the address of PEB
@@ -47,10 +50,11 @@ get_pe_header:
 	
 	ret
 
-; ASSUME: eax containg virtual address of PE header
 get_export:
-	lea eax, [eax + 78h]
-	mov eax, [eax]
+	mov ebx, pe_header
+	lea eax, [ebx + 78h]
+	mov eax, [eax].IMAGE_DATA_DIRECTORY.VirtualAddress
+	add eax, kernel
 	
 	ret
 
