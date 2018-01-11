@@ -1,8 +1,5 @@
 .586p
 .model flat, stdcall
-
-option prologue:none
-option epilogue:none
 option casemap:none
 
 include    windows.inc
@@ -13,6 +10,7 @@ extrn ExitProcess@4 : proc
 .data
 	kernel    dd 0
 	pe_header dd 0
+	hello     db "hello", 0
 	
 .code
 main:
@@ -23,6 +21,9 @@ main:
 	mov pe_header, eax
 	
 	call get_export
+	
+	mov esi, offset hello
+	call get_name_length
 	
 	push 00000000h
 	call ExitProcess@4
@@ -51,10 +52,30 @@ get_pe_header:
 	ret
 
 get_export:
+	push ebx
+	
 	mov ebx, pe_header
 	lea eax, [ebx + 78h]
 	mov eax, [eax].IMAGE_DATA_DIRECTORY.VirtualAddress
 	add eax, kernel
+	
+	pop ebx
+	
+	ret
+	
+get_name_length:
+	push edx
+	push esi
+	
+	mov edx, esi
+	.while byte ptr [esi]
+		inc esi
+	.endw
+	sub esi, edx
+	mov eax, esi
+	
+	pop esi
+	pop edx
 	
 	ret
 
