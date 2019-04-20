@@ -90,6 +90,7 @@ ModuleBegin:
     add eax, dword ptr [esi]
     mov esi, eax            ; В esi - смещение таблицы импорта
     assume esi: ptr IMAGE_IMPORT_DESCRIPTOR
+NextDLL:
     mov edi, [esi].Name1
     add edi, ebx
     .if dword ptr [edi] == "nrek"
@@ -103,7 +104,6 @@ ModuleBegin:
     .endif
     add esi, sizeof IMAGE_IMPORT_DESCRIPTOR
     jmp NextDLL
-NextDLL:
     
 GetKernelImport endp
 
